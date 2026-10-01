@@ -1,0 +1,76 @@
+services:
+  floci:
+    image: floci/floci:latest
+    container_name: floci
+    ports:
+      - "127.0.0.1:4566:4566"
+    volumes:
+      - /mnt/b2/floci:/var/lib/floci
+    environment:
+      - FLOCI_STORAGE_MODE=hybrid
+    restart: unless-stopped
+    mem_limit: 512m
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: floci_postgres
+    ports:
+      - "127.0.0.1:15432:5432"
+    volumes:
+      - /home/msi/floci-lab/data/postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    command: >
+      -c shared_buffers=128MB
+      -c work_mem=4MB
+      -c max_connections=50
+    mem_limit: 512m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U labuser -d labdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: floci_redis
+    ports:
+      - "127.0.0.1:16379:6379"
+    volumes:
+      - /mnt/b2/redis:/data
+    command: redis-server --requirepass ${REDIS_PASSWORD} --maxmemory 128mb --maxmemory-policy allkeys-lru --appendonly yes
+    mem_limit: 256m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout:  5s
+      retries: 5
+  tansu:
+    image: ghcr.io/tansu-io/tansu:latest
+    container_name: floci_tansu
+    ports:
+      - "127.0.0.1:9092:9092"
+    volumes:
+      - /home/msi/floci-lab/data/kafka:/data
+    command:
+      - broker
+      - --kafka-cluster-id
+      - floci-lab
+      - --kafka-listener-url
+      - tcp://0.0.0.0:9092/
+      - --kafka-advertised-listener-url
+      - tcp://localhost:9092
+      - --storage-engine
+      - sqlite:///data/tansu.db
+    mem_limit: 256m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/tansu", "topic", "list"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s  

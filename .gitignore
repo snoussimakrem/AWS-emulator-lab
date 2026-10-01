@@ -1,0 +1,50 @@
+# === Secrets (NEVER commit) ===
+.env
+*.env
+!.env.example
+rclone.conf
+*.key
+*.pem
+credentials
+secrets/
+
+# === Data directories (huge, sensitive) ===
+data/
+backups/
+datasets/
+*.rdb
+*.db
+*.sql
+*.sqlite
+*.sqlite3
+
+# === Python ===
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# === Terraform ===
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfvars
+crash.log
+
+# === Docker / OS ===
+.DS_Store
+Thumbs.db
+*.log
+logs/
+
+# === Lambda build artifacts ===
+lambda.zip
+*.zip
+
+# === IDE ===
+.vscode/
+.idea/
+*.swp
